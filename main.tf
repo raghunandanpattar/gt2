@@ -44,7 +44,7 @@ resource "azurerm_virtual_network" "VNet" {
 # SUBNETS
 variable "subnet-names" {
   type = list(string)
-  default = ["Subnet-Web", "Subnet-App", "Subnet-DB"]
+  default = ["Subnet-Web", "Subnet-App"]
 }
 
 resource "azurerm_subnet" "Subnets" {
@@ -52,13 +52,13 @@ resource "azurerm_subnet" "Subnets" {
   name                 = var.subnet-names[count.index]
   resource_group_name  = azurerm_resource_group.test.name
   virtual_network_name = azurerm_virtual_network.VNet.name
-  address_prefixes     = count.index == 0 ? ["192.168.0.0/26"] : count.index == 1 ? ["192.168.0.64/28"] : ["192.168.0.128/25"]
+  address_prefixes     = count.index == 0 ? ["192.168.0.0/26"] : ["192.168.0.128/25"]
 }
 
 #NETWORK INTERFACE 
 resource "azurerm_network_interface" "nic" {
   count               = length(var.subnet-names)
-  name                = count.index == 0 ? "NIC-Web" : count.index == 1 ? "NIC-App" : "NIC-DB"
+  name                = count.index == 0 ? "NIC-Web" :  "NIC-App"
   location            = azurerm_resource_group.test.location
   resource_group_name = azurerm_resource_group.test.name
 
@@ -72,7 +72,7 @@ resource "azurerm_network_interface" "nic" {
 # CENT OS - VIRTUAL MACHINEs
 resource "azurerm_virtual_machine" "AZURE-VM" {
   count                 = length(var.subnet-names)
-  name                  = count.index == 0 ? "VM-Web" : count.index == 1 ? "VM-App" : "VM-DB"
+  name                  = count.index == 0 ? "VM-Web" : "VM-App" 
   location              = azurerm_resource_group.test.location
   resource_group_name   = azurerm_resource_group.test.name
   network_interface_ids = [azurerm_network_interface.nic[count.index].id]
