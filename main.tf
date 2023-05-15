@@ -236,7 +236,7 @@ resource "azurerm_network_interface" "nick" {
 
 
 # CENT OS - VIRTUAL MACHINEs
-resource "azurerm_virtual_machine" "AZURE-VM" {
+resource "azurerm_virtual_machine" "AZURE-VM-1" {
   name                  = "VM-DB"
   location              = azurerm_resource_group.test.location
   resource_group_name   = azurerm_resource_group.test.name
