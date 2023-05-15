@@ -212,3 +212,84 @@ resource "azurerm_network_interface_application_security_group_association" "app
   network_interface_id          = azurerm_network_interface.nic[2].id
   application_security_group_id = azurerm_application_security_group.ASG-DB.id
 }
+
+
+resource "azurerm_subnet" "Subnet-DB" {
+  name                 ="Subnet-DB"
+  resource_group_name  = azurerm_resource_group.test.name
+  virtual_network_name = azurerm_virtual_network.VNet.name
+  address_prefixes     =  ["192.168.0.64/28"]
+}
+#NETWORK INTERFACE 
+resource "azurerm_network_interface" "nick" {
+  name                ="NICK-DB"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
+
+
+  ip_configuration {
+    name      = "testconfiguration1"
+    subnet_id = azurerm_subnet.Subnet-DB.id
+    private_ip_address_allocation = "Dynamic"
+  }
+}
+
+
+# CENT OS - VIRTUAL MACHINEs
+resource "azurerm_virtual_machine" "AZURE-VM" {
+  name                  = "VM-DB"
+  location              = azurerm_resource_group.test.location
+  resource_group_name   = azurerm_resource_group.test.name
+  network_interface_ids = [azurerm_network_interface.nick.id]
+  vm_size               = "Standard_B2s"
+
+
+  storage_image_reference {
+    publisher = "OpenLogic"
+    offer     = "CentOS"
+    sku       = "7.5"
+    version   = "latest"
+  }
+  storage_os_disk {
+    name              = "myosdisk"
+    caching           = "ReadWrite"
+    create_option     = "FromImage"
+    managed_disk_type = "Premium_LRS"
+  }
+  os_profile {
+    computer_name  = "AZ-EUS-L-WB-HCS-VM-DB"
+    admin_username = var.vm_admin_username
+    admin_password = var.vm_admin_password
+  }
+  os_profile_linux_config {
+    disable_password_authentication = false
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
