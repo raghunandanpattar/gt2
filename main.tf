@@ -44,7 +44,7 @@ resource "azurerm_virtual_network" "VNet" {
 # SUBNETS
 variable "subnet-names" {
   type = list(string)
-  default = ["Subnet-Web", "Subnet-App"]
+  default = ["Subnet-Web", "Subnet-App", "Subnet-DB"]
 }
 
 resource "azurerm_subnet" "Subnets" {
@@ -52,13 +52,13 @@ resource "azurerm_subnet" "Subnets" {
   name                 = var.subnet-names[count.index]
   resource_group_name  = azurerm_resource_group.test.name
   virtual_network_name = azurerm_virtual_network.VNet.name
-  address_prefixes     = count.index == 0 ? ["192.168.0.0/26"] : ["192.168.0.128/25"]
+  address_prefixes = count.index == 0 ? ["192.168.0.0/26"] : count.index == 1 ? ["192.168.0.64/28"] : ["192.168.0.128/25"]
 }
 
 #NETWORK INTERFACE 
 resource "azurerm_network_interface" "nic" {
   count               = length(var.subnet-names)
-  name                = count.index == 0 ? "NIC-Web" :  "NIC-App"
+  name = count.index == 0 ? "NIC-Web" : count.index == 1 ? "NIC-App" : "NIC-DB"
   location            = azurerm_resource_group.test.location
   resource_group_name = azurerm_resource_group.test.name
 
@@ -214,57 +214,7 @@ resource "azurerm_network_interface_application_security_group_association" "app
 }
 
 
-resource "azurerm_subnet" "Subnet-DB" {
-  name                 ="Subnet-DB"
-  resource_group_name  = azurerm_resource_group.test.name
-  virtual_network_name = azurerm_virtual_network.VNet.name
-  address_prefixes     =  ["192.168.0.64/24"]
-}
-#NETWORK INTERFACE 
-resource "azurerm_network_interface" "nick" {
-  name                ="NICK-DB"
-  location            = azurerm_resource_group.test.location
-  resource_group_name = azurerm_resource_group.test.name
 
-
-  ip_configuration {
-    name      = "testconfiguration1"
-    subnet_id = azurerm_subnet.Subnet-DB.id
-    private_ip_address_allocation = "Dynamic"
-  }
-}
-
-
-# CENT OS - VIRTUAL MACHINEs
-resource "azurerm_virtual_machine" "AZURE-VM-1" {
-  name                  = "VM-DB"
-  location              = azurerm_resource_group.test.location
-  resource_group_name   = azurerm_resource_group.test.name
-  network_interface_ids = [azurerm_network_interface.nick.id]
-  vm_size               = "Standard_B2s"
-
-
-  storage_image_reference {
-    publisher = "OpenLogic"
-    offer     = "CentOS"
-    sku       = "7.5"
-    version   = "latest"
-  }
-  storage_os_disk {
-    name              = "myosdisk"
-    caching           = "ReadWrite"
-    create_option     = "FromImage"
-    managed_disk_type = "Premium_LRS"
-  }
-  os_profile {
-    computer_name  = "AZ-EUS-L-WB-HCS-VM-DB"
-    admin_username = var.vm_admin_username
-    admin_password = var.vm_admin_password
-  }
-  os_profile_linux_config {
-    disable_password_authentication = false
-  }
-}
 
 
 
